@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browse Books | MyLibrary</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">📚 MyLibrary</div>
+    <ul class="nav-menu">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="books.html" class="active">Books</a></li>
+    </ul>
+  </nav>
+
+  <section class="sections">
+    <h2>Explore Our Collection</h2>
+
+    <input type="text" id="searchInput" placeholder="Search by Title, Author, or Category..." />
+
+    <div class="book-grid" id="bookGrid">
+      <!-- Book cards will be inserted here dynamically -->
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 MyLibrary</p>
+  </footer>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const bookGrid = document.getElementById('bookGrid');
+
+    async function fetchBooks() {
+      try {
+        const res = await fetch('/books'); // ✅ /books, not /api/books
+        const books = await res.json();
+
+        displayBooks(books);
+
+        searchInput.addEventListener('input', () => {
+          const keyword = searchInput.value.toLowerCase();
+          const filtered = books.filter(book =>
+            book.title.toLowerCase().includes(keyword) ||
+            book.author.toLowerCase().includes(keyword) ||
+            book.categoryName.toLowerCase().includes(keyword)
+          );
+          displayBooks(filtered);
+        });
+
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      }
+    }
+
+    function displayBooks(books) {
+      bookGrid.innerHTML = '';
+
+      if (books.length === 0) {
+        bookGrid.innerHTML = '<p>No books found.</p>';
+        return;
+      }
+
+      books.forEach(book => {
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.innerHTML = `
+          <h3>${book.title}</h3>
+          <p><strong>Author:</strong> ${book.author}</p>
+          <p><strong>Category:</strong> ${book.categoryName}</p>
+          <p><strong>Year:</strong> ${book.publicationYear}</p>
+        `;
+        bookGrid.appendChild(card);
+      });
+    }
+
+    fetchBooks();
+  </script>
+</body>
+</html>

@@ -100,6 +100,24 @@ app.post('/login', (req, res) => {
   });
 });
 
+////////BOOKS PAGE ROUTES///////////
+//fetch all books
+app.get('/books', (req, res) => {
+  const sql = `
+    SELECT Book.bookID, Book.title, Book.author, Book.publicationYear, Category.categoryName
+    FROM Book
+    JOIN Category ON Book.categoryID = Category.categoryID
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error fetching books:', err.message);
+      return res.status(500).json({ message: 'Error fetching books.' });
+    }
+    res.json(results);
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
