@@ -265,3 +265,34 @@
     border: 1px solid #ccc;
     border-radius: 8px;
   }
+
+  /* Reservation status styling */
+  .book-card p strong {
+    display: inline-block;
+    width: 80px;
+  }
+  
+  .book-card p.status-Pending {
+    color: orange;
+  }
+  .book-card p.status-Completed {
+    color: green;
+  }
+  .book-card p.status-Cancelled {
+    color: red;
+  }
+
+  /* Status styling */
+  .status-Paid {
+    color: green;
+  }
+  .status-Unpaid {
+    color: red;
+  }
+
+  .center-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+  }
