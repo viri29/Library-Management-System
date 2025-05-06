@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Account | MyLibrary</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">📚 MyLibrary</div>
+    <ul class="nav-menu">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="books.html">Books</a></li>
+      <li><a href="borrowings.html">Borrowings</a></li>
+      <li><a href="reservations.html">Reservations</a></li>
+      <li><a href="fines.html">Fines</a></li>
+      <li><a href="account.html" class="active">Account</a></li>
+    </ul>
+  </nav>
+
+  <section class="sections">
+    <h2>Your Account</h2>
+    <div class="center-wrap">
+      <div id="accountInfo" class="auth-container"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 MyLibrary</p>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('accountInfo');
+      const userId = localStorage.getItem('userId');
+  
+      if (!userId) {
+        localStorage.setItem('redirectAfterLogin', 'account.html');
+        window.location.href = 'login.html';
+        return;
+      }
+  
+      try {
+        const [userRes, summaryRes] = await Promise.all([
+          fetch(`http://localhost:3000/account?userId=${userId}`),
+          fetch(`http://localhost:3000/account/summary?userId=${userId}`)
+        ]);
+  
+        const user = await userRes.json();
+        const summary = await summaryRes.json();
+  
+        if (!user || !user.firstName) {
+          throw new Error("User not found.");
+        }
+  
+        container.innerHTML = `
+          <h3>${user.firstName} ${user.lastName}</h3>
+          <p><strong>Email:</strong> ${user.email}</p>
+          <p><strong>Role:</strong> ${user.role}</p>
+          <hr style="margin: 20px 0;">
+          <h4>📊 Summary</h4>
+          <p><strong>Pending Reservations:</strong> ${summary.pendingReservations}</p>
+          <p><strong>Completed Reservations:</strong> ${summary.completedReservations}</p>
+          <p><strong>Total Unpaid Fines:</strong> $${parseFloat(summary.totalUnpaidFines).toFixed(2)}</p>
+        `;
+      } catch (err) {
+        console.error("Error loading account or summary:", err);
+        container.innerHTML = "<p>Could not load account info.</p>";
+      }
+    });
+  </script>
+</body>
+</html>

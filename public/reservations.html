@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reservations | MyLibrary</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">📚 MyLibrary</div>
+    <ul class="nav-menu">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="books.html">Books</a></li>
+      <li><a href="borrowings.html">Borrowings</a></li>
+      <li><a href="reservations.html" class="active">Reservations</a></li>
+      <li><a href="fines.html">Fines</a></li>
+      <li><a href="account.html">Account</a></li>
+    </ul>
+  </nav>
+
+  <section class="sections">
+    <h2>Your Book Reservations</h2>
+    <div id="reservationsGrid" class="book-grid"></div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 MyLibrary</p>
+  </footer>
+
+  <script>
+    const grid = document.getElementById('reservationsGrid');
+    const userId = localStorage.getItem('userId');
+
+    if (!userId) {
+      localStorage.setItem('redirectAfterLogin', 'reservations.html');
+      window.location.href = 'login.html';
+    } else {
+      fetch(`http://localhost:3000/reservations?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data)) {
+            throw new Error(data.message || "Unexpected response");
+          }
+
+          if (data.length === 0) {
+            grid.innerHTML = "<p>No current reservations.</p>";
+            return;
+          }
+
+          data.forEach(res => {
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.innerHTML = `
+              <h3>${res.title}</h3>
+              <p><strong>Date:</strong> ${res.reservationDate}</p>
+              <p class="status-${res.status}"><strong>Status:</strong> ${res.status}</p>            
+              `;
+            grid.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error("Error loading reservations:", err);
+          grid.innerHTML = "<p>Failed to load reservations.</p>";
+        });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fines | MyLibrary</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">📚 MyLibrary</div>
+    <ul class="nav-menu">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="books.html">Books</a></li>
+      <li><a href="books.html">Books</a></li>
+      <li><a href="borrowings.html">Borrowings</a></li>
+      <li><a href="reservations.html">Reservations</a></li>
+      <li><a href="fines.html" class="active">Fines</a></li>
+      <li><a href="account.html">Account</a></li>
+
+    </ul>
+  </nav>
+
+  <section class="sections">
+    <h2>Your Fines</h2>
+    <div id="finesGrid" class="book-grid"></div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 MyLibrary</p>
+  </footer>
+
+  <script>
+    const grid = document.getElementById('finesGrid');
+    const userId = localStorage.getItem('userId');
+
+    if (!userId) {
+      localStorage.setItem('redirectAfterLogin', 'fines.html');
+      window.location.href = 'login.html';
+    } else {
+      fetch(`http://localhost:3000/fines?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data)) {
+            throw new Error(data.message || "Unexpected response");
+          }
+
+          if (data.length === 0) {
+            grid.innerHTML = "<p>No outstanding fines.</p>";
+            return;
+          }
+
+          data.forEach(fine => {
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.innerHTML = `
+              <h3>${fine.title}</h3>
+              <p><strong>Amount:</strong> $${fine.amount.toFixed(2)}</p>
+              <p class="status-${fine.status}"><strong>Status:</strong> ${fine.status}</p>
+            `;
+            grid.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error("Error loading fines:", err);
+          grid.innerHTML = "<p>Failed to load fines.</p>";
+        });
+    }
+  </script>
+</body>
+</html>

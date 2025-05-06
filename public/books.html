@@ -12,6 +12,10 @@
     <ul class="nav-menu">
       <li><a href="index.html">Home</a></li>
       <li><a href="books.html" class="active">Books</a></li>
+      <li><a href="borrowings.html">Borrowings</a></li>
+      <li><a href="reservations.html">Reservations</a></li>
+      <li><a href="fines.html">Fines</a></li>
+      <li><a href="account.html">Account</a></li>
     </ul>
   </nav>
 
@@ -35,7 +39,7 @@
 
     async function fetchBooks() {
       try {
-        const res = await fetch('/books'); // ✅ /books, not /api/books
+        const res = await fetch('/books'); 
         const books = await res.json();
 
         displayBooks(books);
@@ -70,7 +74,7 @@
           <h3>${book.title}</h3>
           <p><strong>Author:</strong> ${book.author}</p>
           <p><strong>Category:</strong> ${book.categoryName}</p>
-          <p><strong>Year:</strong> ${book.publicationYear}</p>
+          <p><strong>Published:</strong> ${book.publicationYear}</p>
         `;
         bookGrid.appendChild(card);
       });

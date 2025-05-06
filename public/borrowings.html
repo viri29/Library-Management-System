@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Borrowings | MyLibrary</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">📚 MyLibrary</div>
+    <ul class="nav-menu">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="books.html">Books</a></li>
+      <li><a href="borrowings.html" class="active">Borrowings</a></li>
+      <li><a href="reservations.html">Reservations</a></li>
+      <li><a href="fines.html">Fines</a></li>
+      <li><a href="account.html">Account</a></li>
+    </ul>
+  </nav>
+
+  <section class="sections">
+    <h2>Your Borrowed Books</h2>
+    <div id="borrowingsGrid" class="book-grid"></div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 MyLibrary</p>
+  </footer>
+
+  <script>
+    const grid = document.getElementById('borrowingsGrid');
+    const userId = localStorage.getItem('userId');
+
+    if (!userId) {
+      //not logged in, redirect to login
+      localStorage.setItem('redirectAfterLogin', 'borrowings.html');
+      window.location.href = 'login.html';
+    } else {
+      //fetch user borrowings
+      fetch(`http://localhost:3000/borrowings?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length === 0) {
+            grid.innerHTML = "<p>No current borrowings found.</p>";
+            return;
+          }
+
+          data.forEach(tx => {
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.innerHTML = `
+              <h3>${tx.title}</h3>
+              <p><strong>Issued:</strong> ${tx.issueDate}</p>
+              <p><strong>Due:</strong> ${tx.dueDate}</p>
+              <p><strong>Returned:</strong> ${tx.returnDate || 'Not yet'}</p>
+              <p><strong>Fine:</strong> $${tx.fine.toFixed(2)}</p>
+            `;
+            grid.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error('Error fetching borrowings:', err);
+          grid.innerHTML = '<p>Something went wrong loading your borrowings.</p>';
+        });
+    }
+  </script>
+</body>
+</html>
