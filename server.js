@@ -9,6 +9,7 @@ const db = require('./db');
 //middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
 
 
@@ -100,21 +101,155 @@ app.post('/login', (req, res) => {
   });
 });
 
-////////BOOKS PAGE ROUTES///////////
+////////BOOKS ROUTES///////////
 //fetch all books
 app.get('/books', (req, res) => {
   const sql = `
-    SELECT Book.bookID, Book.title, Book.author, Book.publicationYear, Category.categoryName
-    FROM Book
-    JOIN Category ON Book.categoryID = Category.categoryID
+    SELECT b.bookID, b.title, b.author, b.publicationYear, c.categoryName
+    FROM Books b
+    JOIN Categories c ON b.categoryID = c.categoryID
   `;
 
   db.query(sql, (err, results) => {
     if (err) {
-      console.error('Error fetching books:', err.message);
-      return res.status(500).json({ message: 'Error fetching books.' });
+      console.error('Books SQL Error:', err.message);
+      return res.status(500).json({ message: 'Error fetching books' });
     }
     res.json(results);
+  });
+});
+
+
+//////////////BORROWINGS ROUTE////////////
+app.get('/borrowings', (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+    console.log("Missing userId");
+    return res.status(400).json({ message: 'User ID required' });
+  }
+
+  const sql = `
+    SELECT b.title, bt.issueDate, bt.dueDate, bt.returnDate, bt.fine
+    FROM BorrowingTransactions bt
+    JOIN Books b ON bt.bookID = b.bookID
+    WHERE bt.userID = ?
+    ORDER BY bt.issueDate DESC
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      console.error("SQL Error:", err.message);
+      return res.status(500).json({ message: 'Error fetching borrowings' });
+    }
+
+    res.json(results);
+  });
+});
+
+
+/////////RESERVATIONS ROUTE/////////////
+app.get('/reservations', (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'User ID required' });
+  }
+
+  const sql = `
+    SELECT b.title, r.reservationDate, r.status
+    FROM Reservations r
+    JOIN Books b ON r.bookID = b.bookID
+    WHERE r.userID = ?
+    ORDER BY r.reservationDate DESC
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      console.error("Reservations SQL Error:", err.message);
+      return res.status(500).json({ message: 'Error fetching reservations' });
+    }
+
+    res.json(results);
+  });
+});
+
+
+//////////FINES ROUTE//////////////////
+app.get('/fines', (req, res) => {
+  const userId = req.query.userId;
+
+  if(!userId) {
+    return res.status(400).json({ message: 'User ID required. '});
+  }
+
+  const sql = `
+  SELECT b.title, f.amount, f.Status
+  FROM Fines f
+  JOIN BorrowingTransactions bt ON f.transactionID = bt.transactionID
+  JOIN Books b ON bt.bookID = b.bookID
+  WHERE bt.userID = ?
+  ORDER BY f.amount DESC
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      console.error("Fines SQL Error:", err.message);
+      return res.status(500).json({ message: 'Error fetching reservations' });
+    }
+
+    res.json(results);
+  })
+})
+
+///////////////ACCOUNT ROUTES////////////
+//fetching account user details: name, email, role
+app.get('/account', (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'User ID required' });
+  }
+
+  const sql = `
+    SELECT firstName, lastName, email, role
+    FROM Users
+    WHERE userID = ?
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      console.error("Account SQL Error:", err.message);
+      return res.status(500).json({ message: 'Error fetching user info' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(results[0]);
+  });
+});
+//fetching account summary details: pending fines, pending reservations, completed reservations
+app.get('/account/summary', (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) return res.status(400).json({ message: 'User ID required' });
+
+  const sql = `
+    SELECT
+      (SELECT COUNT(*) FROM Reservations WHERE userID = ? AND status = 'Pending') AS pendingReservations,
+      (SELECT COUNT(*) FROM Reservations WHERE userID = ? AND status = 'Completed') AS completedReservations,
+      (SELECT IFNULL(SUM(amount), 0.00) FROM Fines f
+        JOIN BorrowingTransactions bt ON f.transactionID = bt.transactionID
+        WHERE bt.userID = ? AND f.status = 'Unpaid') AS totalUnpaidFines
+  `;
+
+  db.query(sql, [userId, userId, userId], (err, results) => {
+    if (err) {
+      console.error('Summary SQL Error:', err.message);
+      return res.status(500).json({ message: 'Error fetching summary' });
+    }
+    res.json(results[0]);
   });
 });
 
