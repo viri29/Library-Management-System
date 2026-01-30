@@ -12,12 +12,13 @@
     <ul class="nav-menu">
       <li><a href="index.html">Home</a></li>
       <li><a href="books.html">Books</a></li>
-      <li><a href="books.html">Books</a></li>
-      <li><a href="borrowings.html">Borrowings</a></li>
+      <li><a href="borrowings.html">Borrowing History</a></li>
       <li><a href="reservations.html">Reservations</a></li>
       <li><a href="fines.html" class="active">Fines</a></li>
       <li><a href="account.html">Account</a></li>
-
+      <li><a href="login.html" id="loginLink">Login</a></li>
+      <li><a href="register.html" id="registerLink">Register</a></li>
+      <li><a href="#" id="logoutLink" style="display: none;">Logout</a></li>
     </ul>
   </nav>
 
@@ -31,6 +32,25 @@
   </footer>
 
   <script>
+    //handle showing/hiding nav links based on login
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = localStorage.getItem('userId');
+      const loginLink = document.getElementById('loginLink');
+      const registerLink = document.getElementById('registerLink');
+      const logoutLink = document.getElementById('logoutLink');
+
+      if (isLoggedIn) {
+        loginLink.style.display = 'none';
+        registerLink.style.display = 'none';
+        logoutLink.style.display = 'inline-block';
+
+        logoutLink.addEventListener('click', () => {
+          localStorage.clear();
+          window.location.href = 'login.html';
+        });
+      }
+    });
+
     const grid = document.getElementById('finesGrid');
     const userId = localStorage.getItem('userId');
 
@@ -55,8 +75,8 @@
             card.className = 'book-card';
             card.innerHTML = `
               <h3>${fine.title}</h3>
-              <p><strong>Amount:</strong> $${fine.amount.toFixed(2)}</p>
-              <p class="status-${fine.status}"><strong>Status:</strong> ${fine.status}</p>
+              <p><strong>Amount:</strong> $${fine.amount ? Number(fine.amount).toFixed(2) : '0.00'}</p>              
+              <p class="Status-${fine.Status}"><strong>Status:</strong> ${fine.Status}</p>
             `;
             grid.appendChild(card);
           });

@@ -12,10 +12,13 @@
     <ul class="nav-menu">
       <li><a href="index.html">Home</a></li>
       <li><a href="books.html">Books</a></li>
-      <li><a href="borrowings.html">Borrowings</a></li>
+      <li><a href="borrowings.html">Borrowings History</a></li>
       <li><a href="reservations.html">Reservations</a></li>
       <li><a href="fines.html">Fines</a></li>
       <li><a href="account.html" class="active">Account</a></li>
+      <li><a href="login.html" id="loginLink">Login</a></li>
+      <li><a href="register.html" id="registerLink">Register</a></li>
+      <li><a href="#" id="logoutLink" style="display: none;">Logout</a></li>
     </ul>
   </nav>
 
@@ -31,10 +34,29 @@
   </footer>
 
   <script>
+    //handle showing/hiding nav
+      document.addEventListener('DOMContentLoaded', () => {
+        const isLoggedIn = localStorage.getItem('userId');
+        const loginLink = document.getElementById('loginLink');
+        const registerLink = document.getElementById('registerLink');
+        const logoutLink = document.getElementById('logoutLink');
+
+        if (isLoggedIn) {
+          loginLink.style.display = 'none';
+          registerLink.style.display = 'none';
+          logoutLink.style.display = 'inline-block';
+
+          logoutLink.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'login.html';
+          });
+        }
+      });
+
     document.addEventListener('DOMContentLoaded', async () => {
       const container = document.getElementById('accountInfo');
       const userId = localStorage.getItem('userId');
-  
+      
       if (!userId) {
         localStorage.setItem('redirectAfterLogin', 'account.html');
         window.location.href = 'login.html';
