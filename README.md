@@ -1,4 +1,4 @@
-# Library-Management-System (CSE5720)
+# Library-Management-System
 
 ## Description
 Easy and convenient library management app for students, faculty and librarians to browse books and keep up with general library records. 
