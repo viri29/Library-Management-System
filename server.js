@@ -149,31 +149,67 @@ app.get('/borrowings', (req, res) => {
 
 
 /////////RESERVATIONS ROUTE/////////////
+//show reservation list
 app.get('/reservations', (req, res) => {
   const userId = req.query.userId;
-
-  if (!userId) {
-    return res.status(400).json({ message: 'User ID required' });
-  }
-
   const sql = `
-    SELECT b.title, r.reservationDate, r.status
+    SELECT r.reservationID, b.title, r.reservationDate, r.status
     FROM Reservations r
     JOIN Books b ON r.bookID = b.bookID
     WHERE r.userID = ?
-    ORDER BY r.reservationDate DESC
   `;
 
   db.query(sql, [userId], (err, results) => {
     if (err) {
-      console.error("Reservations SQL Error:", err.message);
-      return res.status(500).json({ message: 'Error fetching reservations' });
+      console.error('Reservation fetch error:', err);
+      return res.status(500).json({ message: 'Database error' });
     }
-
     res.json(results);
   });
 });
 
+//route to reserve book
+app.post('/reserve', (req, res) => {
+  const { userID, bookID } = req.body;
+
+  if (!userID || !bookID) {
+    return res.status(400).json({ message: 'User ID and Book ID required.' });
+  }
+
+  const sql = `
+    INSERT INTO Reservations (userID, bookID, reservationDate, status)
+    VALUES (?, ?, CURDATE(), 'Pending')
+  `;
+
+  db.query(sql, [userID, bookID], (err, result) => {
+    if (err) {
+      console.error('Reservation SQL Error:', err.message);
+      return res.status(500).json({ message: 'Failed to reserve book.' });
+    }
+
+    res.status(201).json({ message: 'Book reserved successfully! You will have ONE WEEK to *pick up*. After issued, you will have ONE MONTH to *return*!' });
+  });
+});
+
+//route to cancel a reservation
+app.put('/reservations/cancel', (req, res) => {
+  const { reservationID } = req.body;
+
+  if (!reservationID) {
+    return res.status(400).json({ message: 'Missing reservation ID' });
+  }
+
+  const sql = `UPDATE Reservations SET status = 'Cancelled' WHERE reservationID = ?`;
+
+  db.query(sql, [reservationID], (err, result) => {
+    if (err) {
+      console.error('Cancel error:', err.message);
+      return res.status(500).json({ message: 'Database error' });
+    }
+
+    res.json({ message: 'Reservation cancelled successfully!' });
+  });
+});
 
 //////////FINES ROUTE//////////////////
 app.get('/fines', (req, res) => {
@@ -201,6 +237,8 @@ app.get('/fines', (req, res) => {
     res.json(results);
   })
 })
+
+
 
 ///////////////ACCOUNT ROUTES////////////
 //fetching account user details: name, email, role
@@ -230,6 +268,7 @@ app.get('/account', (req, res) => {
     res.json(results[0]);
   });
 });
+
 //fetching account summary details: pending fines, pending reservations, completed reservations
 app.get('/account/summary', (req, res) => {
   const userId = req.query.userId;
