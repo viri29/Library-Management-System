@@ -12,10 +12,13 @@
     <ul class="nav-menu">
       <li><a href="index.html">Home</a></li>
       <li><a href="books.html">Books</a></li>
-      <li><a href="borrowings.html">Borrowings</a></li>
+      <li><a href="borrowings.html">Borrowing History</a></li>
       <li><a href="reservations.html" class="active">Reservations</a></li>
       <li><a href="fines.html">Fines</a></li>
       <li><a href="account.html">Account</a></li>
+      <li><a href="login.html" id="loginLink">Login</a></li>
+      <li><a href="register.html" id="registerLink">Register</a></li>
+      <li><a href="#" id="logoutLink" style="display: none;">Logout</a></li>
     </ul>
   </nav>
 
@@ -29,9 +32,28 @@
   </footer>
 
   <script>
+    //handle showing/hiding nav links based on login
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = localStorage.getItem('userId');
+      const loginLink = document.getElementById('loginLink');
+      const registerLink = document.getElementById('registerLink');
+      const logoutLink = document.getElementById('logoutLink');
+  
+      if (isLoggedIn) {
+        loginLink.style.display = 'none';
+        registerLink.style.display = 'none';
+        logoutLink.style.display = 'inline-block';
+  
+        logoutLink.addEventListener('click', () => {
+          localStorage.clear();
+          window.location.href = 'login.html';
+        });
+      }
+    });
+  
     const grid = document.getElementById('reservationsGrid');
     const userId = localStorage.getItem('userId');
-
+  
     if (!userId) {
       localStorage.setItem('redirectAfterLogin', 'reservations.html');
       window.location.href = 'login.html';
@@ -42,20 +64,21 @@
           if (!Array.isArray(data)) {
             throw new Error(data.message || "Unexpected response");
           }
-
+  
           if (data.length === 0) {
             grid.innerHTML = "<p>No current reservations.</p>";
             return;
           }
-
+  
           data.forEach(res => {
             const card = document.createElement('div');
             card.className = 'book-card';
             card.innerHTML = `
               <h3>${res.title}</h3>
-              <p><strong>Date:</strong> ${res.reservationDate}</p>
-              <p class="status-${res.status}"><strong>Status:</strong> ${res.status}</p>            
-              `;
+              <p><strong>Date:</strong> ${res.reservationDate.slice(0, 10)}</p>
+              <p class="status-${res.status}"><strong>Status:</strong> ${res.status}</p>
+              ${res.status === 'Pending' ? `<button class="hero-btn cancel-btn" onclick="cancelReservation(${res.reservationID})">Cancel</button>` : ''}
+            `;
             grid.appendChild(card);
           });
         })
@@ -63,6 +86,25 @@
           console.error("Error loading reservations:", err);
           grid.innerHTML = "<p>Failed to load reservations.</p>";
         });
+
+    function cancelReservation(reservationID) {
+      if (!confirm("Are you sure you want to cancel this reservation?")) return;
+
+      fetch(`http://localhost:3000/reservations/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reservationID })
+      })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          window.location.reload(); //refresh to show updated status
+        })
+        .catch(err => {
+          console.error("Cancel error:", err);
+          alert("Failed to cancel reservation.");
+        });
+  }
     }
   </script>
 </body>
