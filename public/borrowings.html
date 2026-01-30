@@ -12,10 +12,13 @@
     <ul class="nav-menu">
       <li><a href="index.html">Home</a></li>
       <li><a href="books.html">Books</a></li>
-      <li><a href="borrowings.html" class="active">Borrowings</a></li>
+      <li><a href="borrowings.html" class="active">Borrow History</a></li>
       <li><a href="reservations.html">Reservations</a></li>
       <li><a href="fines.html">Fines</a></li>
       <li><a href="account.html">Account</a></li>
+      <li><a href="login.html" id="loginLink">Login</a></li>
+      <li><a href="register.html" id="registerLink">Register</a></li>
+      <li><a href="#" id="logoutLink" style="display: none;">Logout</a></li>
     </ul>
   </nav>
 
@@ -29,41 +32,60 @@
   </footer>
 
   <script>
-    const grid = document.getElementById('borrowingsGrid');
-    const userId = localStorage.getItem('userId');
+    //handle showing/hiding nav links based on login
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = localStorage.getItem('userId');
+      const loginLink = document.getElementById('loginLink');
+      const registerLink = document.getElementById('registerLink');
+      const logoutLink = document.getElementById('logoutLink');
 
-    if (!userId) {
-      //not logged in, redirect to login
-      localStorage.setItem('redirectAfterLogin', 'borrowings.html');
-      window.location.href = 'login.html';
-    } else {
-      //fetch user borrowings
-      fetch(`http://localhost:3000/borrowings?userId=${userId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.length === 0) {
-            grid.innerHTML = "<p>No current borrowings found.</p>";
-            return;
-          }
+      if (isLoggedIn) {
+        loginLink.style.display = 'none';
+        registerLink.style.display = 'none';
+        logoutLink.style.display = 'inline-block';
 
-          data.forEach(tx => {
-            const card = document.createElement('div');
-            card.className = 'book-card';
-            card.innerHTML = `
-              <h3>${tx.title}</h3>
-              <p><strong>Issued:</strong> ${tx.issueDate}</p>
-              <p><strong>Due:</strong> ${tx.dueDate}</p>
-              <p><strong>Returned:</strong> ${tx.returnDate || 'Not yet'}</p>
-              <p><strong>Fine:</strong> $${tx.fine.toFixed(2)}</p>
-            `;
-            grid.appendChild(card);
-          });
-        })
-        .catch(err => {
-          console.error('Error fetching borrowings:', err);
-          grid.innerHTML = '<p>Something went wrong loading your borrowings.</p>';
+        logoutLink.addEventListener('click', () => {
+          localStorage.clear();
+          window.location.href = 'login.html';
         });
-    }
-  </script>
+      }
+    });
+    
+    const grid = document.getElementById('borrowingsGrid');
+  const userId = localStorage.getItem('userId');
+
+  if (!userId) {
+    // Not logged in, redirect to login
+    localStorage.setItem('redirectAfterLogin', 'borrowings.html');
+    window.location.href = 'login.html';
+  } else {
+    // Fetch user borrowings
+    fetch(`http://localhost:3000/borrowings?userId=${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.length === 0) {
+          grid.innerHTML = "<p>No current borrowings found.</p>";
+          return;
+        }
+
+        data.forEach(tx => {
+          const card = document.createElement('div');
+          card.className = 'book-card';
+          card.innerHTML = `
+            <h3>${tx.title}</h3>
+            <p><strong>Issued:</strong> ${tx.issueDate.slice(0, 10)}</p>
+            <p><strong>Due:</strong> ${tx.dueDate.slice(0, 10)}</p>
+            <p><strong>Returned:</strong> ${tx.returnDate ? tx.returnDate.slice(0, 10) : 'Not yet'}</p>
+            <p><strong>Fine:</strong> $${Number(tx.fine || 0).toFixed(2)}</p>
+          `;
+          grid.appendChild(card);
+        });
+      })
+      .catch(err => {
+        console.error('Error fetching borrowings:', err);
+        grid.innerHTML = '<p>Something went wrong loading your borrowings.</p>';
+      });
+  }
+</script>
 </body>
 </html>
