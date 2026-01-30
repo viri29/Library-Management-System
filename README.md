@@ -36,15 +36,38 @@ Library-Management-System/
 ## How to Run
 ### Requirement
 ```
-Node.js (v18 or later recommended)
-MySQL Workbench
+- Node.js (v18 or later recommended)
+- npm
+- MySQL (MySQL Workbench or local installation)
 ```
-
-### Database
+### Database Schema
 
 ### Setup
+1. Clone the repository
+2. Install dependencies in the root directory
+```
+npm install
+```
+3. Create a .env file in the root directory and add
+```
+DB_HOST=localhost
+DB_USER=your_mysql_username
+DB_PASS=your_mysql_password
+DB_NAME=library_db
+PORT=3000
+```
+(adjust values based on your MySQL setup)
 
+4. Set up the database
+5. Start the server
+```
+node index.js
+```
 ## Future Improvements
+1. More details on book tiles (images, descriptions, ratings, etc.)
+2. Pay fees/fines online.
+3. Add search filters.
+4. Reminder alerts for book pickups and book returns.
 
 ## Technologies Used
 - JavaScript
