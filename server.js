@@ -9,16 +9,10 @@ const db = require('./db');
 //middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 app.use(express.urlencoded({ extended: false }));
 
 
 ///////////REGISTER USER ROUTES/////////////////
-//receive a request for register.html page
-app.get('/register.html', (req, res) => {
-  res.sendFile(dirname+"/"+"register.html");
-});
-
 //save user registration info to table
 app.post('/register', async (req, res) => {
   const { firstName, lastName, email, password, role } = req.body;
@@ -60,11 +54,6 @@ app.post('/register', async (req, res) => {
 });
 
 ///////////LOGIN USER ROUTES/////////////////
-//receive a request for login.html page
-app.get('/login.html', (req, res) => {
-  res.sendFile(dirname+"/"+"login.html");
-});
-
 //log user in
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
@@ -153,7 +142,7 @@ app.get('/borrowings', (req, res) => {
 app.get('/reservations', (req, res) => {
   const userId = req.query.userId;
   const sql = `
-    SELECT r.reservationID, b.title, r.reservationDate, r.status
+    SELECT r.reservationID, r.bookID, b.title, r.reservationDate, r.status
     FROM Reservations r
     JOIN Books b ON r.bookID = b.bookID
     WHERE r.userID = ?
@@ -176,18 +165,34 @@ app.post('/reserve', (req, res) => {
     return res.status(400).json({ message: 'User ID and Book ID required.' });
   }
 
-  const sql = `
-    INSERT INTO Reservations (userID, bookID, reservationDate, status)
-    VALUES (?, ?, CURDATE(), 'Pending')
+  const checkSql = `
+    SELECT reservationID FROM Reservations
+    WHERE userID = ? AND bookID = ? AND status = 'Pending'
   `;
 
-  db.query(sql, [userID, bookID], (err, result) => {
+  db.query(checkSql, [userID, bookID], (err, existing) => {
     if (err) {
-      console.error('Reservation SQL Error:', err.message);
-      return res.status(500).json({ message: 'Failed to reserve book.' });
+      console.error('Reservation check SQL Error:', err.message);
+      return res.status(500).json({ message: 'Error checking existing reservations.' });
     }
 
-    res.status(201).json({ message: 'Book reserved successfully! You will have ONE WEEK to *pick up*. After issued, you will have ONE MONTH to *return*!' });
+    if (existing.length > 0) {
+      return res.status(409).json({ message: 'You already have this book reserved.' });
+    }
+
+    const sql = `
+      INSERT INTO Reservations (userID, bookID, reservationDate, status)
+      VALUES (?, ?, CURDATE(), 'Pending')
+    `;
+
+    db.query(sql, [userID, bookID], (err, result) => {
+      if (err) {
+        console.error('Reservation SQL Error:', err.message);
+        return res.status(500).json({ message: 'Failed to reserve book.' });
+      }
+
+      res.status(201).json({ message: 'Book reserved successfully! You will have ONE WEEK to *pick up*. After issued, you will have ONE MONTH to *return*!' });
+    });
   });
 });
 
